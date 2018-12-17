@@ -1,5 +1,4 @@
-#!/home/emerson/Documentos/projects/pycambridge/app/bin/python
-#aqui acima o caminho para o python de seu ambiente virtual
+#here the path for virtual environment python binary 
 import requests
 import sys
 import re
