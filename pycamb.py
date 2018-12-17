@@ -17,6 +17,28 @@ class Colour:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
+def default_printage(re, defs, Colour):
+    if defs.findParent().findParent().attrs['class'][0] == 'phrase-block':
+        print (Colour.DARKCYAN + re.sub('[:.]','.\n',defs.findParent().findParent().get_text().capitalize()) + Colour.END)
+    else:
+        p = re.compile('\[ .+?\]')
+        m = p.findall(defs.find(class_='def-head semi-flush').get_text())
+        #print header definition of a word
+        try:
+            print (re.sub('\[ .+?\]',Colour.RED+m[0]+Colour.END+Colour.DARKCYAN,defs.find(class_='def-head semi-flush').get_text()))
+        except IndexError:
+            print (re.sub('[:.]','.',Colour.DARKCYAN + defs.find(class_='def-head semi-flush').get_text())) 
+            #print below examples of the word
+        for examps in defs.find_all(class_='examp emphasized'):
+            m = p.findall(examps.get_text())
+            mod1 = Colour.GREEN + re.sub('[:.]','.',examps.get_text().capitalize())+ Colour.END
+            try:
+                mod2 = re.sub('\[ .+?\]',Colour.RED+m[0]+Colour.END+Colour.GREEN,mod1)
+                print(mod2)
+            except IndexError:
+                print(mod1)
+
+
 def yellow_line():
     print(Colour.YELLOW + '======================================================================================================================================' + Colour.END)
 
@@ -62,17 +84,9 @@ def printing_definitions(soup, tab_search, Colour, definition):
                 for txtblock in sb.find_all(class_="txt-block txt-block--alt2"):
                     print (Colour.CYAN + Colour.BOLD + txtblock.get_text().capitalize() + Colour.END)
                     for defs in sb.find_all(class_="def-block pad-indent"):
-                        #checking if the definition is from a phrase-block
-                        if defs.findParent().findParent().attrs['class'][0] == 'phrase-block':
-                            print (Colour.DARKCYAN + re.sub('[:.]','.\n',defs.findParent().findParent().get_text().capitalize()) + Colour.END)
-                        else:
-                            #match in between the curly braces and highligh it
-                            p = re.compile('\[.*\]')
-                            m = p.findall(defs.get_text())
-                            mod1 = Colour.GREEN + re.sub('[:.]','.\n',defs.get_text())+'\n' + Colour.END
-                            mod2 = re.sub('\[ .* \]',Colour.RED+m[0]+Colour.END+Colour.GREEN,mod1)
-                            print(mod2)
+                        default_printage(re, defs, Colour)
                         yellow_line()
+
             #for those which have the above class commented, below is performed
             else:
                 for defs in sb.find_all(class_="def-block pad-indent"):
@@ -81,31 +95,46 @@ def printing_definitions(soup, tab_search, Colour, definition):
                         print (Colour.PURPLE + Colour.BOLD + defs.findParent().findParent().findParent().findPreviousSibling().find(class_='pos').get_text())
                     except AttributeError:
                         pass
-                    #checking if the definition is from a phrase-block
-                    if defs.findParent().findParent().attrs['class'][0] == 'phrase-block':
-                        print (Colour.DARKCYAN + re.sub('[:.]','.\n',defs.findParent().findParent().get_text().capitalize()) + Colour.END)
-                    else: 
-                        #normally printing definitions
-                        print (Colour.GREEN +re.sub('[:.]','.\n',defs.get_text())+'\n' + Colour.END)
-                        yellow_line()
+                    default_printage(re, defs, Colour)
+                    yellow_line()
 
     #only first and main defitions for easy reading
     else:
-        for txtblock in sense_block[0].find(class_="def-block pad-indent"):
+        for txtblock in sense_block[0].find_all(class_="def-block pad-indent"):
+            #VERY UGLY SECTION, RETHINK AND REFACTORY IT!
             try:
-                #catch pos header class here as well
-                print (Colour.PURPLE + Colour.BOLD + txtblock.findParent().findParent().findParent().findParent().findPreviousSibling().find(class_='pos').get_text())
+                #if pos header class exists, catch it and display
+                print (Colour.PURPLE + Colour.BOLD + txtblock.findParent().findParent().findParent().findParent().findPreviousSibling().find(class_='pos').get_text() + Colour.END)
             except AttributeError:
                 pass
-            p = re.compile('\[.*\]')
-            m = p.findall(txtblock.get_text())
-            mod1 = Colour.GREEN + re.sub('[:.]','.\n',txtblock.get_text() + '\n') + Colour.END
-            #some definitions have no such curly braces blocks
+            
             try:
-                mod2 = re.sub('\[ .* \]',Colour.RED+m[0]+Colour.END+Colour.GREEN,mod1)
-                print(mod2)
+                print(Colour.PURPLE + Colour.BOLD +re.sub('[\n]','',txtblock.findParent().findParent().findParent().findPreviousSibling().find(class_='pron-info').get_text()) + Colour.END)
+            except AttributeError:
+                pass
+            
+            try:
+                print(Colour.PURPLE + Colour.BOLD +re.sub('[\n]','',txtblock.findParent().findParent().findParent().findPreviousSibling().find(class_='irreg-infls').get_text()) + Colour.END)
+            except AttributeError:
+                pass
+
+            p = re.compile('\[.+?\]')
+            m = p.findall(txtblock.find(class_='def-head semi-flush').get_text())
+            #print header definition of a word
+            try:
+                print (re.sub('\[.+?\]',Colour.RED+m[0]+Colour.END+Colour.DARKCYAN,txtblock.find(class_='def-head semi-flush').get_text()))
             except IndexError:
-                print(mod1)
+                print (re.sub('[:.]','.',Colour.DARKCYAN + '\n' + txtblock.find(class_='def-head semi-flush').get_text())) 
+            #print further below examples of the word
+            for examps in txtblock.find_all(class_='examp emphasized'):
+                m = p.findall(examps.get_text())
+                mod1 = Colour.GREEN + re.sub('[:.]','.',examps.get_text()) + Colour.END
+                #some definitions have no such curly braces blocks
+                try:
+                    mod2 = re.sub('\[ .+?\]',Colour.RED+m[0]+Colour.END+Colour.GREEN,mod1)
+                    print(mod2)
+                except IndexError:
+                    print(mod1)
         yellow_line()
 
     return 0
