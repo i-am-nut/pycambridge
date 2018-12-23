@@ -1,3 +1,4 @@
+#!/home/emerson/Documentos/projects/pycambridge/app/bin/python
 #here the path for virtual environment python binary 
 import requests
 import sys
@@ -206,3 +207,4 @@ if __name__ ==  '__main__':
 
     else:
         print(Colour.RED + "You've entered an invalid category\n" + help())
+$(which python)
